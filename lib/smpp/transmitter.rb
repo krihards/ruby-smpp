@@ -49,7 +49,7 @@ class Smpp::Transmitter < Smpp::Base
       else
         raise InvalidStateException, "Transmitter is unbound. Cannot send MT messages."
       end
-    end
+  end
 
   def send_bind
     raise IOError, 'Transmitter already bound.' unless unbound?

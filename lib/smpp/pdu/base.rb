@@ -142,6 +142,7 @@ module Smpp::Pdu
       if !header
         return nil
       end
+      # len is not used but required for unpacking
       len, cmd, status, seq = header.unpack('N4')
       body = data[16..-1]
 
@@ -163,7 +164,7 @@ module Smpp::Pdu
     def Base.parse_optional_parameters(remaining_bytes)
       optionals = {}
       while not remaining_bytes.empty?
-        optional = {}
+        optionals = {}
         optional_parameter, remaining_bytes = Smpp::OptionalParameter.from_wire_data(remaining_bytes)
         optionals[optional_parameter.tag] = optional_parameter
       end

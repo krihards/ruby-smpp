@@ -25,8 +25,8 @@ module Smpp
       # associated message ID, and then create a pending delivery report.
       @ack_ids = {}
 
-      ed = @config[:enquire_link_delay_secs] || 5
-      comm_inactivity_timeout = 2 * ed
+      # ed = @config[:enquire_link_delay_secs] || 5
+      # comm_inactivity_timeout = 2 * ed
     end
 
     # queries the state of the transmitter - is it bound?

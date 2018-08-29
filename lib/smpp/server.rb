@@ -20,8 +20,8 @@ class Smpp::Server < Smpp::Base
     @received_messages = received_messages
     @sent_messages = sent_messages
 
-    ed = @config[:enquire_link_delay_secs] || 5
-    comm_inactivity_timeout = [ed - 5, 3].max
+    # ed = @config[:enquire_link_delay_secs] || 5
+    # comm_inactivity_timeout = [ed - 5, 3].max
   rescue Exception => ex
     logger.error "Exception setting up server: #{ex}"
     raise

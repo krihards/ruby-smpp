@@ -18,6 +18,7 @@ class Smpp::Pdu::BindBase < Smpp::Pdu::Base
 
   def self.from_wire_data(seq, status, body)
     #unpack the body
+    # interface_version unused but required for the unpacking
     system_id, password, system_type, interface_version, addr_ton,
     addr_npi, address_range = body.unpack("Z*Z*Z*CCCZ*")
 
