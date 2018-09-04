@@ -11,11 +11,12 @@ module Smpp
   class Base < EventMachine::Connection
     include Smpp
 
-    # :bound or :unbound
+    # TODO Replace :bound and :unbound states with
+    # :open, :bound_tx, bound_rx, bound_trx, :closed
     attr_accessor :state
 
     def initialize(config, delegate)
-      @state = :unbound
+      @state = :closed
       @config = config
       @data = ""
       @delegate = delegate
@@ -31,11 +32,11 @@ module Smpp
 
     # queries the state of the transmitter - is it bound?
     def unbound?
-      @state == :unbound
+       [:closed, :open].include?(@state)
     end
 
     def bound?
-      @state == :bound
+      [:bind_tx, :bind_rx, :bind_trx].include?(@state)
     end
 
     def Base.logger
@@ -126,7 +127,7 @@ module Smpp
 
     def send_unbind
       write_pdu Pdu::Unbind.new
-      @state = :unbound
+      @state = :closed
     end
 
     def run_callback(cb, *args)
@@ -144,7 +145,7 @@ module Smpp
       when Pdu::EnquireLink
         write_pdu(Pdu::EnquireLinkResponse.new(pdu.sequence_number))
       when Pdu::Unbind
-        @state = :unbound
+        @state = :closed
         write_pdu(Pdu::UnbindResponse.new(pdu.sequence_number, Pdu::Base::ESME_ROK))
         close_connection
       when Pdu::UnbindResponse
@@ -173,7 +174,7 @@ module Smpp
         case pdu.command_status
         when Pdu::Base::ESME_ROK
           logger.debug "Bound OK."
-          @state = :bound
+          @state = :bound_trx
           run_callback(:bound, self)
         when Pdu::Base::ESME_RINVPASWD
           logger.warn "Invalid password."
@@ -218,7 +219,7 @@ module Smpp
         case pdu.command_status
         when Pdu::Base::ESME_ROK
           logger.debug "Bound OK."
-          @state = :bound
+          @state = :bound_rx
           run_callback(:bound, self)
         when Pdu::Base::ESME_RINVPASWD
           logger.warn "Invalid password."
@@ -239,7 +240,7 @@ module Smpp
         case pdu.command_status
         when Pdu::Base::ESME_ROK
           logger.debug "Bound OK."
-          @state = :bound
+          @state = :bound_tx
           run_callback(:bound, self)
         when Pdu::Base::ESME_RINVPASWD
           logger.warn "Invalid password."

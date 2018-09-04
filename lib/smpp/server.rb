@@ -35,9 +35,9 @@ class Smpp::Server < Smpp::Base
 
   # convenience methods
   # is this session currently bound?
-  def bound?
-    @state == :bound
-  end
+  # def bound?
+  #   @state == :bound
+  # end
   # is this session currently unbound?
   def unbound?
     @state == :unbound

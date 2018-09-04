@@ -11,7 +11,7 @@ class Smpp::Transmitter < Smpp::Base
   # acknowledges, or the message_rejected callback upon error
   def send_mt(message_id, source_addr, destination_addr, short_message, options={})
     logger.debug "Sending MT: #{short_message}"
-    if @state == :bound
+    if @state == :bound_tx
       pdu = Pdu::SubmitSm.new(source_addr, destination_addr, short_message, options)
       write_pdu(pdu)
 
@@ -24,7 +24,7 @@ class Smpp::Transmitter < Smpp::Base
   end
 
   def send_concat_mt(message_id, source_addr, destination_addr, message, options = {})
-      if @state == :bound
+      if @state == :bound_tx
         # Split the message into parts of 134 characters.
         parts = []
         while message.size > 0 do
