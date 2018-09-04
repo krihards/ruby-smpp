@@ -1,9 +1,5 @@
 # encoding: UTF-8
 
-# --------
-# This is experimental stuff submitted by taryn@taryneast.org
-# --------
-
 # the opposite of a client-based receiver, the server transmitter will send
 # out MOs to the client when set up
 class Smpp::Server < Smpp::Base
@@ -16,7 +12,7 @@ class Smpp::Server < Smpp::Base
   # and optionally a hash-like storage for pending delivery reports.
   def initialize(config, received_messages = [], sent_messages = [])
     super(config, nil)
-    @state = :unbound
+    @state = :closed
     @received_messages = received_messages
     @sent_messages = sent_messages
 
@@ -34,42 +30,32 @@ class Smpp::Server < Smpp::Base
   # Session helpers
 
   # convenience methods
-  # is this session currently bound?
-  # def bound?
-  #   @state == :bound
-  # end
-  # is this session currently unbound?
-  def unbound?
-    @state == :unbound
-  end
-  # set of valid bind statuses
-  BIND_STATUSES = {:transmitter => :bound_tx,
-           :receiver => :bound_rx, :transceiver => :bound_trx}
+
   # set the bind status based on the common-name for the bind class
-  def set_bind_status(bind_classname)
-    @bind_status = BIND_STATUSES[bind_classname]
+  def set_bind_status(bind_status)
+    @state = bind_status
   end
   # and kill the bind status when done
   def unset_bind_status
-    @bind_status = nil
+    @state = :closed
   end
   # what is the bind_status?
   def bind_status
-    @bind_status
+    @state
   end
   # convenience function - are we able to transmit in this bind-Status?
   def transmitting?
     # not transmitting if not bound
     return false if unbound? || bind_status.nil?
     # receivers can't transmit
-    bind_status != :bound_rx
+    [:bound_tx, :bound_trx].include?(@state)
   end
   # convenience function - are we able to receive in this bind-Status?
   def receiving?
     # not receiving if not bound
     return false if unbound? || bind_status.nil?
     # transmitters can't receive
-    bind_status != :bound_tx
+    [:bound_tx, :bound_trx].include?(@state)
   end
 
   def am_server?
@@ -79,35 +65,35 @@ class Smpp::Server < Smpp::Base
   # REVISIT - not sure if these are using the correct data.  Currently just
   # pulls the data straight out of the given pdu and sends it right back.
   #
-  def fetch_bind_response_class(bind_classname)
+  def fetch_bind_response_class(bind_status)
     # check we have a valid classname - probably overkill as only our code
     # will send the classnames through
-    raise IOError, "bind class name missing" if bind_classname.nil?
-    raise IOError, "bind class name: #{bind_classname} unknown" unless BIND_STATUSES.has_key?(bind_classname)
+    raise IOError, "bind status missing" if bind_status.nil?
+    raise IOError, "bind status: #{bind_status} unknown" unless [:bound_tx, :bound_rx, :bound_trx].include?(bind_status)
 
-    case bind_classname
-    when :transceiver
+    case bind_status
+    when :bound_trx
       return Smpp::Pdu::BindTransceiverResponse
-    when :transmitter
+    when :bound_tx
       return Smpp::Pdu::BindTransmitterResponse
-    when :receiver
+    when :bound_rx
       return Smpp::Pdu::BindReceiverResponse
     end
   end
 
   # actually perform the action of binding the session to the given session
   # type
-  def bind_session(bind_pdu, bind_classname)
+  def bind_session(bind_pdu, bind_status)
     # TODO: probably should not "raise" here - what's better?
     raise IOError, "Session already bound." if bound?
-    response_class = fetch_bind_response_class(bind_classname)
+    response_class = fetch_bind_response_class(bind_status)
 
     # TODO: look inside the pdu for the password and check it
 
     send_bind_response(bind_pdu, response_class)
 
-    @state = :bound
-    set_bind_status(bind_classname)
+    @state = bind_status
+    set_bind_status(bind_status)
   end
 
   # Send BindReceiverResponse PDU - used in response to a "bind_receiver"
@@ -204,11 +190,11 @@ class Smpp::Server < Smpp::Base
     case pdu
     # client has asked to set up a connection
     when Pdu::BindTransmitter
-      bind_session(pdu, :transmitter)
+      bind_session(pdu, :bound_tx)
     when Pdu::BindReceiver
-      bind_session(pdu, :receiver)
+      bind_session(pdu, :bound_rx)
     when Pdu::BindTransceiver
-      bind_session(pdu, :transceiver)
+      bind_session(pdu, :bound_trx)
     # client has acknowledged receipt of a message we sent to them
     when Pdu::DeliverSmResponse
       accept_deliver_sm_response(pdu) # acknowledge its sending
