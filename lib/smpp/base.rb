@@ -106,7 +106,6 @@ module Smpp
         begin
           # parse incoming PDU
           pdu = read_pdu(pkt)
-
           # let subclass process it
           process_pdu(pdu) if pdu
         rescue Exception => e

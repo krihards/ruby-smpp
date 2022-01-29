@@ -170,7 +170,6 @@ class Smpp::Server < Smpp::Base
     # TODO: probably should not "raise" here - what's better?
     raise IOError, "Connection not bound." if unbound?
     raise IOError, "Connection not set to receive" unless receiving?
-
     # submit the given message
     new_pdu = Pdu::DeliverSm.new(from, to, message, config)
     write_pdu(new_pdu)
