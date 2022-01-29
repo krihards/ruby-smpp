@@ -22,7 +22,7 @@ For help please use the Google group here: http://groups.google.com/group/ruby-s
 
 === Protocol
 
-The SMPP 3.4 protocol spec can be downloaded here: http://smsforum.net/SMPP_v3_4_Issue1_2.zip
+The SMPP 3.4 protocol spec can be downloaded here: https://github.com/twitter/cloudhopper-smpp/blob/master/src/etc/SMPP_v3_4_Issue1_2.pdf
 
 === Testing/Sample Code
 

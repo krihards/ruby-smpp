@@ -19,7 +19,7 @@ class Smpp::Transceiver < Smpp::Base
   # acknowledges, or the message_rejected callback upon error
   def send_mt(message_id, source_addr, destination_addr, short_message, options={})
     logger.debug "Sending MT: #{short_message}"
-    if @state == :bound
+    if @state == :bound_trx
       pdu = Pdu::SubmitSm.new(source_addr, destination_addr, short_message, options)
       write_pdu pdu
 
@@ -34,7 +34,7 @@ class Smpp::Transceiver < Smpp::Base
   # Send a concatenated message with a body of > 160 characters as multiple messages.
   def send_concat_mt(message_id, source_addr, destination_addr, message, options = {})
     logger.debug "Sending concatenated MT: #{message}"
-    if @state == :bound
+    if @state == :bound_trx
       # Split the message into parts of 153 characters. (160 - 7 characters for UDH)
       parts = []
       while message.size > 0 do
@@ -71,7 +71,7 @@ class Smpp::Transceiver < Smpp::Base
   # USAGE: $tx.send_multi_mt(123, "9100000000", ["9199000000000","91990000000001","9199000000002"], "Message here")
   def send_multi_mt(message_id, source_addr, destination_addr_arr, short_message, options={})
     logger.debug "Sending Multiple MT: #{short_message}"
-    if @state == :bound
+    if @state == :bound_trx
       pdu = Pdu::SubmitMulti.new(source_addr, destination_addr_arr, short_message, options)
       write_pdu pdu
 
