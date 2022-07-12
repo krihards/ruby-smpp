@@ -31,7 +31,7 @@ class Smpp::Pdu::SubmitSm < Smpp::Pdu::Base
     @replace_if_present_flag = options[:replace_if_present_flag] ? options[:replace_if_present_flag] : 0
     @data_coding             = options[:data_coding] ? options[:data_coding] : 3 # iso-8859-1
     @sm_default_msg_id       = options[:sm_default_msg_id] ? options[:sm_default_msg_id] : 0
-    @short_message           = short_message
+    @short_message = Smpp::Pdu::SubmitSm.get_encode_message(options[:data_coding], short_message)
     payload                  = @udh ? @udh + @short_message : @short_message
     @sm_length               = payload.length
 
@@ -88,6 +88,15 @@ class Smpp::Pdu::SubmitSm < Smpp::Pdu::Base
     Smpp::Base.logger.debug "SubmitSM with source_addr=#{source_addr}, destination_addr=#{destination_addr}"
 
     new(source_addr, destination_addr, short_message, options, seq)
+  end
+
+  # Added Encoding to UCS-2
+  def self.get_encode_message(data_coding, short_message)
+    if data_coding == 8
+      short_message.encode("UTF-16BE").force_encoding("BINARY")
+    else
+      short_message
+    end
   end
 
 end
