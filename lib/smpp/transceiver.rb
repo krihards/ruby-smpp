@@ -17,7 +17,7 @@ class Smpp::Transceiver < Smpp::Base
 
   # Send an MT SMS message. Delegate will receive message_accepted callback when SMSC
   # acknowledges, or the message_rejected callback upon error
-  def send_mt(message_id, source_addr, destination_addr, short_message, options={})
+  def send_mt(message_id, source_addr, destination_addr, short_message, options = {})
     logger.debug "Sending MT: #{short_message}"
     if @state == :bound_trx
       pdu = Pdu::SubmitSm.new(source_addr, destination_addr, short_message, options)
@@ -38,18 +38,18 @@ class Smpp::Transceiver < Smpp::Base
       # Split the message into parts of 153 characters. (160 - 7 characters for UDH)
       parts = []
       while message.size > 0 do
-        parts << message.slice!(0..Smpp::Transceiver.get_message_part_size(options))
+        parts << message.slice!(0...Smpp::Transceiver.get_message_part_size(options))
       end
 
-      0.upto(parts.size-1) do |i|
-        udh = sprintf("%c", 5)            # UDH is 5 bytes.
-        udh << sprintf("%c%c", 0, 3)      # This is a concatenated message
+      0.upto(parts.size - 1) do |i|
+        udh = sprintf("%c", 5) # UDH is 5 bytes.
+        udh << sprintf("%c%c", 0, 3) # This is a concatenated message
 
         #TODO Figure out why this needs to be an int here, it's a string elsewhere
-        udh << sprintf("%c", message_id)  # The ID for the entire concatenated message
+        udh << sprintf("%c", message_id.to_s.last(2).to_i) # The ID for the entire concatenated message
 
-        udh << sprintf("%c", parts.size)  # How many parts this message consists of
-        udh << sprintf("%c", i+1)         # This is part i+1
+        udh << sprintf("%c", parts.size) # How many parts this message consists of
+        udh << sprintf("%c", i + 1) # This is part i+1
 
         options[:esm_class] = 64 # This message contains a UDH header.
         options[:udh] = udh
@@ -69,7 +69,7 @@ class Smpp::Transceiver < Smpp::Base
   # Send  MT SMS message for multiple dest_address
   # Author: Abhishek Parolkar (abhishek[at]parolkar.com)
   # USAGE: $tx.send_multi_mt(123, "9100000000", ["9199000000000","91990000000001","9199000000002"], "Message here")
-  def send_multi_mt(message_id, source_addr, destination_addr_arr, short_message, options={})
+  def send_multi_mt(message_id, source_addr, destination_addr_arr, short_message, options = {})
     logger.debug "Sending Multiple MT: #{short_message}"
     if @state == :bound_trx
       pdu = Pdu::SubmitMulti.new(source_addr, destination_addr_arr, short_message, options)
@@ -87,12 +87,12 @@ class Smpp::Transceiver < Smpp::Base
   def send_bind
     raise IOError, 'Receiver already bound.' unless unbound?
     pdu = Pdu::BindTransceiver.new(
-        @config[:system_id],
-        @config[:password],
-        @config[:system_type],
-        @config[:source_ton],
-        @config[:source_npi],
-        @config[:source_address_range])
+      @config[:system_id],
+      @config[:password],
+      @config[:system_type],
+      @config[:source_ton],
+      @config[:source_npi],
+      @config[:source_address_range])
     write_pdu(pdu)
   end
 
@@ -101,11 +101,11 @@ class Smpp::Transceiver < Smpp::Base
   def self.get_message_part_size options
     return 153 if options[:data_coding].nil?
     return 153 if options[:data_coding] == 0
-    return 134 if options[:data_coding] == 3
+    return 153 if options[:data_coding] == 3
     return 134 if options[:data_coding] == 5
     return 134 if options[:data_coding] == 6
     return 134 if options[:data_coding] == 7
-    return 67  if options[:data_coding] == 8
+    return 67 if options[:data_coding] == 8
     return 153
   end
 end
