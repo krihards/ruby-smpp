@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    ruby-smpp (0.6.0)
+    ruby-smpp (0.6.2)
       eventmachine
       scanf
 
@@ -16,7 +16,7 @@ GEM
       power_assert
 
 PLATFORMS
-  ruby
+  x86_64-linux
 
 DEPENDENCIES
   bundler
@@ -25,4 +25,4 @@ DEPENDENCIES
   test-unit
 
 BUNDLED WITH
-   2.2.3
+   2.3.16
