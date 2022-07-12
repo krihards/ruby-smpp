@@ -25,3 +25,4 @@ vendor/ruby
 ## PROJECT::SPECIFIC
 *.log
 nbproject
+.idea
