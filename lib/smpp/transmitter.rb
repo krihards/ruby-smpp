@@ -35,10 +35,11 @@ class Smpp::Transmitter < Smpp::Base
     logger.debug "Sending concatenated MT: #{message}"
     if @state == :bound_tx
       # Split the message into parts of 153 characters. (160 - 7 characters for UDH)
-      parts = []
-      while message.size > 0 do
-        parts << message.slice!(0...Smpp::Transmitter.get_message_part_size(options))
-      end
+
+      part_size = Smpp::Transceiver.get_message_part_size(options)
+      parts = slice_by_char_units(message, part_size)
+      logger.debug "Sending concatenated MT: Parts #{parts}"
+
       0.upto(parts.size - 1) do |i|
         logger.debug "Message size: #{parts[i].size}"
         udh = sprintf("%c", 5) # UDH is 5 bytes.
@@ -87,4 +88,28 @@ class Smpp::Transmitter < Smpp::Base
     return 67 if options[:data_coding] == 8
     return 153
   end
+
+  def slice_by_char_units(str, max_units)
+    result = []
+    buffer = ""
+    current_units = 0
+
+    str.each_char do |char|
+      units = char.bytesize >= 3 ? 2 : 1
+
+      if current_units + units > max_units
+        result << buffer
+        buffer = ""
+        current_units = 0
+      end
+
+      buffer << char
+      current_units += units
+    end
+
+    result << buffer unless buffer.empty?
+    result
+  end
+
+
 end
